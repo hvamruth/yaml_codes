@@ -1,0 +1,12 @@
+- name: Install Apache2 Server
+  hosts: your_target_hosts
+  become: true
+  tasks:
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
