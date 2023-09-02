@@ -114,3 +114,6 @@
     - name: Install ownCloud apps (optional)
       command: php /var/www/owncloud/occ app:install <app_name>
       when: ansible_os_family == 'Debian'
+
+# Install through this below line
+ansible-playbook -u your_ssh_user -i your_server_ip_or_hostname, owncloud_install.yml
