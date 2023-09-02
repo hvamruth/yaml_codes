@@ -1,0 +1,116 @@
+---
+- name: Install ownCloud
+  hosts: your_server_ip_or_hostname
+  become: yes
+  tasks:
+    - name: Update apt package cache (for Ubuntu/Debian)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install required packages
+      apt:
+        name:
+          - apache2
+          - mariadb-server
+          - mariadb-client
+          - libapache2-mod-php
+          - php
+          - php-mysql
+          - php-json
+          - php-curl
+          - php-intl
+          - php-mcrypt
+          - php-imagick
+          - php-xml
+          - php-zip
+          - php-gd
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    # Additional tasks for CentOS/RHEL servers can be added here
+
+    - name: Start and enable Apache
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Secure MariaDB installation
+      mysql_user:
+        name: root
+        password: your_mysql_root_password
+        host: localhost
+      when: ansible_os_family == 'Debian'
+
+    - name: Create ownCloud database and user
+      mysql_db:
+        name: owncloud
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Create ownCloud database user
+      mysql_user:
+        name: owncloud
+        password: your_owncloud_db_password
+        priv: "owncloud.*:ALL"
+        host: localhost
+      when: ansible_os_family == 'Debian'
+
+    - name: Download ownCloud
+      get_url:
+        url: https://download.owncloud.org/community/owncloud-x.y.z.zip
+        dest: /var/www/owncloud.zip
+      when: ansible_os_family == 'Debian'
+
+    - name: Extract ownCloud
+      unarchive:
+        src: /var/www/owncloud.zip
+        dest: /var/www/
+        remote_src: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Set ownership and permissions
+      file:
+        path: /var/www/owncloud
+        owner: www-data
+        group: www-data
+        recurse: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure Apache virtual host
+      template:
+        src: owncloud.conf.j2
+        dest: /etc/apache2/sites-available/owncloud.conf
+      when: ansible_os_family == 'Debian'
+
+    - name: Enable Apache virtual host
+      command: a2ensite owncloud
+      when: ansible_os_family == 'Debian'
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+      when: ansible_os_family == 'Debian'
+
+    - name: Install ownCloud
+      command: php /var/www/owncloud/occ maintenance:install --database "mysql" --database-name "owncloud" --database-user "owncloud" --database-pass "your_owncloud_db_password" --admin-user "admin" --admin-pass "your_owncloud_admin_password"
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure ownCloud trusted domain
+      lineinfile:
+        dest: /var/www/owncloud/config/config.php
+        line: "'trusted_domains' =>"
+      when: ansible_os_family == 'Debian'
+
+    - name: Set ownCloud trusted domain
+      lineinfile:
+        dest: /var/www/owncloud/config/config.php
+        line: "  1 => 'your_server_domain_or_ip',"
+      when: ansible_os_family == 'Debian'
+
+    - name: Install ownCloud apps (optional)
+      command: php /var/www/owncloud/occ app:install <app_name>
+      when: ansible_os_family == 'Debian'
